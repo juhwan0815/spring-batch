@@ -35,4 +35,4 @@ spring:
       initialize-schema: always
 
     job:
-      enabled: true # 자동 실행
+      enabled: false # 자동 실행
