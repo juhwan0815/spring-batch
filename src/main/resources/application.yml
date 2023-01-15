@@ -31,8 +31,9 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   batch:
+    job:
+      names: ${job.name:NONE}
+      enabled: true
     jdbc:
       initialize-schema: always
-
-    job:
-      enabled: false # 자동 실행
+#      table-prefix: SYSTEM_
