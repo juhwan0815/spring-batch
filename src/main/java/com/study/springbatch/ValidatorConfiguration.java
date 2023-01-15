@@ -1,11 +1,13 @@
 package com.study.springbatch;
 
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.job.DefaultJobParametersValidator;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,7 +15,7 @@ import org.springframework.context.annotation.Configuration;
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
-public class StartNextConfiguration {
+public class ValidatorConfiguration {
 
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
@@ -24,6 +26,12 @@ public class StartNextConfiguration {
                 .start(step1())
                 .next(step2())
                 .next(step3())
+//                .validator(new CustomJobParametersValidator())
+                .validator(new DefaultJobParametersValidator(
+                                new String[]{"name", "date"},
+                                new String[]{"count"}
+                        )
+                )
                 .build();
     }
 
@@ -31,6 +39,7 @@ public class StartNextConfiguration {
     public Step step1() {
         return stepBuilderFactory.get("step1")
                 .tasklet((contribution, chunkContext) -> {
+                    log.info("step1 was executed");
                     return RepeatStatus.FINISHED;
                 })
                 .build();
@@ -40,6 +49,7 @@ public class StartNextConfiguration {
     public Step step2() {
         return stepBuilderFactory.get("step2")
                 .tasklet((contribution, chunkContext) -> {
+                    log.info("step2 was executed");
                     return RepeatStatus.FINISHED;
                 })
                 .build();
@@ -49,8 +59,10 @@ public class StartNextConfiguration {
     public Step step3() {
         return stepBuilderFactory.get("step3")
                 .tasklet((contribution, chunkContext) -> {
+                    log.info("step3 was executed");
                     return RepeatStatus.FINISHED;
                 })
                 .build();
     }
+
 }
