@@ -14,18 +14,17 @@ import org.springframework.context.annotation.Configuration;
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
-public class IncrementerConfiguration {
+public class SimpleJobArchitectureConfiguration {
 
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
 
     @Bean
-    public Job job() {
+    public Job job(){
         return jobBuilderFactory.get("job")
                 .start(step1())
                 .next(step2())
-//                .incrementer(new RunIdIncrementer())
-                .incrementer(new CustomJobParametersIncrementer())
+                .incrementer(new RunIdIncrementer())
                 .build();
     }
 
@@ -33,6 +32,7 @@ public class IncrementerConfiguration {
     public Step step1() {
         return stepBuilderFactory.get("step1")
                 .tasklet((contribution, chunkContext) -> {
+                    log.info("step1 was executed");
                     return RepeatStatus.FINISHED;
                 })
                 .build();
@@ -42,9 +42,9 @@ public class IncrementerConfiguration {
     public Step step2() {
         return stepBuilderFactory.get("step2")
                 .tasklet((contribution, chunkContext) -> {
+                    log.info("step2 was executed");
                     return RepeatStatus.FINISHED;
                 })
                 .build();
     }
-
 }
