@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Configuration;
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
-public class LimitAllowConfiguration {
+public class TaskletStepConfiguration {
 
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
@@ -33,18 +33,17 @@ public class LimitAllowConfiguration {
                     log.info("step1 was executed");
                     return RepeatStatus.FINISHED;
                 })
-                .allowStartIfComplete(true)
                 .build();
     }
+
     @Bean
     public Step step2() {
         return stepBuilderFactory.get("step2")
                 .tasklet((contribution, chunkContext) -> {
                     log.info("step2 was executed");
-                    throw new RuntimeException("step2 has failed");
-//                    return RepeatStatus.FINISHED;
+                    return RepeatStatus.FINISHED;
                 })
-                .startLimit(3)
                 .build();
     }
+
 }
