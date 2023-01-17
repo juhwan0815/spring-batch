@@ -12,11 +12,10 @@ import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
-public class FlowJobConfiguration {
+public class SimpleFlowConfiguration {
 
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
@@ -59,6 +58,7 @@ public class FlowJobConfiguration {
                 .build();
     }
 
+
     @Bean
     public Step step3() {
         return stepBuilderFactory.get("step3")
@@ -68,5 +68,4 @@ public class FlowJobConfiguration {
                 })
                 .build();
     }
-
 }
