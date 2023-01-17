@@ -12,7 +12,6 @@ import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
@@ -24,38 +23,20 @@ public class SimpleFlowConfiguration {
     @Bean
     public Job job() {
         return jobBuilderFactory.get("job")
-                .start(flow1())
+                .start(step1())
                 .on("COMPLETED")
-                .to(flow2())
-                .from(flow1())
+                .to(step2())
+                .from(step1())
                 .on("FAILED")
-                .to(flow3())
+                .to(flow())
                 .end()
                 .build();
     }
 
-    @Bean
-    public Flow flow1() {
-        FlowBuilder<Flow> flowBuilder = new FlowBuilder<>("flow1");
-        return flowBuilder
-                .start(step1())
-                .next(step2())
-                .end();
-    }
 
     @Bean
-    public Flow flow2() {
-        FlowBuilder<Flow> flowBuilder = new FlowBuilder<>("flow2");
-        return flowBuilder
-                .start(flow3())
-                .next(step5())
-                .next(step6())
-                .end();
-    }
-
-    @Bean
-    public Flow flow3() {
-        FlowBuilder<Flow> flowBuilder = new FlowBuilder<>("flow3");
+    public Flow flow() {
+        FlowBuilder<Flow> flowBuilder = new FlowBuilder<>("flow");
         return flowBuilder
                 .start(step3())
                 .next(step4())
@@ -67,7 +48,8 @@ public class SimpleFlowConfiguration {
         return stepBuilderFactory.get("step1")
                 .tasklet((contribution, chunkContext) -> {
                     log.info("step1 was executed");
-                    return RepeatStatus.FINISHED;
+                    throw new RuntimeException("step1 was failed");
+//                    return RepeatStatus.FINISHED;
                 })
                 .build();
     }
@@ -77,12 +59,10 @@ public class SimpleFlowConfiguration {
         return stepBuilderFactory.get("step2")
                 .tasklet((contribution, chunkContext) -> {
                     log.info("step2 was executed");
-                    throw new RuntimeException("step2 was failed");
-//                    return RepeatStatus.FINISHED;
+                    return RepeatStatus.FINISHED;
                 })
                 .build();
     }
-
 
     @Bean
     public Step step3() {
@@ -94,7 +74,6 @@ public class SimpleFlowConfiguration {
                 .build();
     }
 
-
     @Bean
     public Step step4() {
         return stepBuilderFactory.get("step4")
@@ -104,26 +83,4 @@ public class SimpleFlowConfiguration {
                 })
                 .build();
     }
-
-    @Bean
-    public Step step5() {
-        return stepBuilderFactory.get("step5")
-                .tasklet((contribution, chunkContext) -> {
-                    log.info("step5 was executed");
-                    return RepeatStatus.FINISHED;
-                })
-                .build();
-    }
-
-    @Bean
-    public Step step6() {
-        return stepBuilderFactory.get("step6")
-                .tasklet((contribution, chunkContext) -> {
-                    log.info("step6 was executed");
-                    return RepeatStatus.FINISHED;
-                })
-                .build();
-    }
-
-
 }
