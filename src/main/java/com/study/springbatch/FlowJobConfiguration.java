@@ -6,16 +6,17 @@ import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
-import org.springframework.batch.core.job.flow.JobExecutionDecider;
-import org.springframework.batch.core.launch.support.RunIdIncrementer;
+import org.springframework.batch.core.job.builder.FlowBuilder;
+import org.springframework.batch.core.job.flow.Flow;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
-public class JobExecutionDeciderConfiguration {
+public class FlowJobConfiguration {
 
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
@@ -23,47 +24,49 @@ public class JobExecutionDeciderConfiguration {
     @Bean
     public Job job() {
         return jobBuilderFactory.get("job")
-                .incrementer(new RunIdIncrementer())
-                .start(step())
-                .next(decider())
-                .from(decider()).on("ODD").to(oddStep())
-                .from(decider()).on("EVEN").to(evenStep())
+                .start(flow())
+                .next(step3())
                 .end()
                 .build();
     }
 
     @Bean
-    public JobExecutionDecider decider() {
-        return new CustomDecider();
+    public Flow flow() {
+        FlowBuilder<Flow> flowBuilder = new FlowBuilder<>("flow");
+        flowBuilder.start(step1())
+                .next(step2())
+                .end();
+        return flowBuilder.build();
     }
 
     @Bean
-    public Step step() {
-        return stepBuilderFactory.get("startStep")
+    public Step step1() {
+        return stepBuilderFactory.get("step1")
                 .tasklet((contribution, chunkContext) -> {
-                    log.info("This is the start Tasklet");
+                    log.info("step1 was executed");
                     return RepeatStatus.FINISHED;
                 })
                 .build();
     }
 
     @Bean
-    public Step evenStep() {
-        return stepBuilderFactory.get("evenStep")
+    public Step step2() {
+        return stepBuilderFactory.get("step2")
                 .tasklet((contribution, chunkContext) -> {
-                    log.info("evenStep has executed");
+                    log.info("step2 was executed");
                     return RepeatStatus.FINISHED;
                 })
                 .build();
     }
 
     @Bean
-    public Step oddStep() {
-        return stepBuilderFactory.get("oddStep")
+    public Step step3() {
+        return stepBuilderFactory.get("step3")
                 .tasklet((contribution, chunkContext) -> {
-                    log.info("oddStep has executed");
+                    log.info("step3 was executed");
                     return RepeatStatus.FINISHED;
                 })
                 .build();
     }
+
 }
