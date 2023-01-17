@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Configuration;
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
-public class SimpleFlowConfiguration {
+public class FlowStepConfiguration {
 
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
@@ -23,23 +23,22 @@ public class SimpleFlowConfiguration {
     @Bean
     public Job job() {
         return jobBuilderFactory.get("job")
-                .start(step1())
-                .on("COMPLETED")
-                .to(step2())
-                .from(step1())
-                .on("FAILED")
-                .to(flow())
-                .end()
+                .start(flowStep())
+                .next(step2())
                 .build();
     }
 
+    @Bean
+    public Step flowStep() {
+        return stepBuilderFactory.get("flowStep")
+                .flow(flow())
+                .build();
+    }
 
     @Bean
     public Flow flow() {
         FlowBuilder<Flow> flowBuilder = new FlowBuilder<>("flow");
-        return flowBuilder
-                .start(step3())
-                .next(step4())
+        return flowBuilder.start(step1())
                 .end();
     }
 
@@ -59,26 +58,6 @@ public class SimpleFlowConfiguration {
         return stepBuilderFactory.get("step2")
                 .tasklet((contribution, chunkContext) -> {
                     log.info("step2 was executed");
-                    return RepeatStatus.FINISHED;
-                })
-                .build();
-    }
-
-    @Bean
-    public Step step3() {
-        return stepBuilderFactory.get("step3")
-                .tasklet((contribution, chunkContext) -> {
-                    log.info("step3 was executed");
-                    return RepeatStatus.FINISHED;
-                })
-                .build();
-    }
-
-    @Bean
-    public Step step4() {
-        return stepBuilderFactory.get("step4")
-                .tasklet((contribution, chunkContext) -> {
-                    log.info("step4 was executed");
                     return RepeatStatus.FINISHED;
                 })
                 .build();
