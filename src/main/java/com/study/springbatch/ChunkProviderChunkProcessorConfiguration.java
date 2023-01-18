@@ -9,7 +9,6 @@ import org.springframework.batch.core.configuration.annotation.StepBuilderFactor
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.support.ListItemReader;
-import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -19,7 +18,7 @@ import java.util.List;
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
-public class ChunkOrientedTaskletConfiguration {
+public class ChunkProviderChunkProcessorConfiguration {
 
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
@@ -28,15 +27,14 @@ public class ChunkOrientedTaskletConfiguration {
     public Job job() {
         return jobBuilderFactory.get("job")
                 .start(step1())
-                .next(step2())
                 .build();
     }
 
     @Bean
     public Step step1() {
         return stepBuilderFactory.get("step1")
-                .<String, String>chunk(2)
-                .reader(new ListItemReader<>(Arrays.asList("item1", "item2", "item3", "item4", "item5")))
+                .<String, String> chunk(2)
+                .reader(new ListItemReader<>(Arrays.asList("item1", "item2", "item3", "item4", "item5", "item6")))
                 .processor(new ItemProcessor<String, String>() {
                     @Override
                     public String process(String item) throws Exception {
@@ -47,20 +45,11 @@ public class ChunkOrientedTaskletConfiguration {
                     @Override
                     public void write(List<? extends String> items) throws Exception {
                         items.forEach(item -> {
-                            log.info("item = {}", item);
+                            log.info("item={}", item);
                         });
                     }
                 })
                 .build();
     }
 
-    @Bean
-    public Step step2() {
-        return stepBuilderFactory.get("step2")
-                .tasklet((contribution, chunkContext) -> {
-                    log.info("step2 was executed");
-                    return RepeatStatus.FINISHED;
-                })
-                .build();
-    }
 }
