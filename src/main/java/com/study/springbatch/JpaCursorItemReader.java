@@ -8,23 +8,23 @@ import org.springframework.batch.core.configuration.annotation.JobBuilderFactory
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
-import org.springframework.batch.item.database.builder.JdbcCursorItemReaderBuilder;
+import org.springframework.batch.item.database.builder.JpaCursorItemReaderBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import javax.sql.DataSource;
+import javax.persistence.EntityManagerFactory;
+import java.util.HashMap;
+import java.util.Map;
 
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
-public class JdbcCursorConfiguration {
+public class JpaCursorItemReader {
 
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
 
-    private final DataSource dataSource;
-
-    private int chunkSize = 10;
+    private final EntityManagerFactory entityManagerFactory;
 
     @Bean
     public Job job() {
@@ -35,29 +35,33 @@ public class JdbcCursorConfiguration {
 
     @Bean
     public Step step1() {
-        return stepBuilderFactory.get("step1")
-                .<Customer, Customer>chunk(chunkSize)
+        return stepBuilderFactory.get("ste1p")
+                .<Customer, Customer>chunk(5)
                 .reader(customItemReader())
                 .writer(customItemWriter())
                 .build();
     }
 
+    ;
+
     @Bean
     public ItemReader<Customer> customItemReader() {
-        return new JdbcCursorItemReaderBuilder<Customer>()
-                .name("jdbcCursorItemReader")
-                .fetchSize(chunkSize)
-                .sql("select id, firstName, lastName, birthdate from customer where firstName like ? order by lastName, firstName")
-                .beanRowMapper(Customer.class)
-                .queryArguments("A%")
-                .dataSource(dataSource)
+
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("firstName", "A%");
+
+        return new JpaCursorItemReaderBuilder<Customer>()
+                .name("jpaCursorItemReader")
+                .entityManagerFactory(entityManagerFactory)
+                .queryString("select c from Customer c where firstName like :firstName")
+                .parameterValues(parameters)
                 .build();
     }
 
     @Bean
     public ItemWriter<Customer> customItemWriter() {
-        return items -> {
-            items.forEach(item -> log.info("item = {}", item));
+        return customers -> {
+            customers.forEach(customer -> log.info("customer = {}", customer));
         };
     }
 }
