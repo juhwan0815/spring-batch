@@ -1,22 +1,24 @@
 package com.study.springbatch;
 
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import javax.persistence.*;
 
-@Data
 @Entity
+@Data
 public class Customer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "firstName")
-    private String firstName;
+    private String username;
 
-    @Column(name = "lastName")
-    private String lastName;
+    private int age;
 
-    private String birthdate;
+    @OneToOne(mappedBy = "customer")
+    private Address address;
+
 }
