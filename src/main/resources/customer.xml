@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<customers>
+    <customer>
+        <id>1</id>
+        <name>황주환</name>
+        <age>27</age>
+    </customer>
+    <customer>
+        <id>2</id>
+        <name>강태환</name>
+        <age>27</age>
+    </customer>
+    <customer>
+        <id>3</id>
+        <name>황철원</name>
+        <age>27</age>
+    </customer>
+</customers>
