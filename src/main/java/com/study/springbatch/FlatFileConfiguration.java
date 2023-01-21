@@ -8,8 +8,8 @@ import org.springframework.batch.core.configuration.annotation.JobBuilderFactory
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
-import org.springframework.batch.item.file.FlatFileItemReader;
-import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
+import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
+import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
@@ -47,15 +47,15 @@ public class FlatFileConfiguration {
 
     @Bean
     public ItemReader itemReader() {
-        DefaultLineMapper<Customer> lineMapper = new DefaultLineMapper<>();
-        lineMapper.setTokenizer(new DelimitedLineTokenizer());
-        lineMapper.setFieldSetMapper(new CustomerFieldSetMapper());
-
-        FlatFileItemReader<Customer> itemReader = new FlatFileItemReader<>();
-        itemReader.setResource(new ClassPathResource("/customer.csv"));
-        itemReader.setLineMapper(lineMapper);
-        itemReader.setLinesToSkip(1);
-        return itemReader;
+        return new FlatFileItemReaderBuilder<Customer>()
+                .name("flatFile")
+                .resource(new ClassPathResource("/customer.csv"))
+                .fieldSetMapper(new BeanWrapperFieldSetMapper<>())
+                .targetType(Customer.class)
+                .linesToSkip(1)
+                .delimited().delimiter(",")
+                .names("name", "age", "year")
+                .build();
     }
 
 }
