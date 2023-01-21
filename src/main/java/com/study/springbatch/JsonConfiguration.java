@@ -8,20 +8,16 @@ import org.springframework.batch.core.configuration.annotation.JobBuilderFactory
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
-import org.springframework.batch.item.xml.builder.StaxEventItemReaderBuilder;
+import org.springframework.batch.item.json.JacksonJsonObjectReader;
+import org.springframework.batch.item.json.builder.JsonItemReaderBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.oxm.Unmarshaller;
-import org.springframework.oxm.xstream.XStreamMarshaller;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
-public class XMLConfiguration {
+public class JsonConfiguration {
 
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
@@ -32,7 +28,6 @@ public class XMLConfiguration {
                 .start(step1())
                 .build();
     }
-
 
     @Bean
     public Step step1() {
@@ -45,33 +40,19 @@ public class XMLConfiguration {
 
     @Bean
     public ItemReader<Customer> customerItemReader() {
-        return new StaxEventItemReaderBuilder<Customer>()
-                .name("staxXml")
-                .resource(new ClassPathResource("/customer.xml"))
-                .addFragmentRootElements("customer")
-                .unmarshaller(itemUnMarshaller())
+        return new JsonItemReaderBuilder<Customer>()
+                .name("jsonReader")
+                .resource(new ClassPathResource("customer.json"))
+                .jsonObjectReader(new JacksonJsonObjectReader<>(Customer.class))
                 .build();
-    }
-
-
-    @Bean
-    public Unmarshaller itemUnMarshaller() {
-        Map<String, Class<?>> aliases = new HashMap<>();
-        aliases.put("customer", Customer.class);
-        aliases.put("id", Long.class);
-        aliases.put("name", String.class);
-        aliases.put("age", Integer.class);
-
-        XStreamMarshaller xStreamMarshaller = new XStreamMarshaller();
-        xStreamMarshaller.setAliases(aliases);
-        return xStreamMarshaller;
     }
 
     @Bean
     public ItemWriter<Customer> customerItemWriter() {
         return customers -> {
-            customers.forEach(customer -> log.info("customer = {}", customer));
+            customers.forEach(customer -> {
+                log.info("customer = {}", customer);
+            });
         };
     }
-
 }
