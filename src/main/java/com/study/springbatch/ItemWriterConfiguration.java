@@ -7,11 +7,13 @@ import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.item.*;
-import org.springframework.batch.item.adapter.ItemWriterAdapter;
+import org.springframework.batch.item.support.builder.CompositeItemProcessorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import javax.persistence.EntityManagerFactory;
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @Configuration
@@ -44,22 +46,24 @@ public class ItemWriterConfiguration {
                         return i > 10 ? null : "item" + i;
                     }
                 })
-                .writer(customItemWriter())
+                .processor(customItemProcessor())
+                .writer(items -> {
+                    items.forEach(item -> {
+                        log.info("item = {}", item);
+                    });
+                })
                 .build();
     }
 
     @Bean
-    public ItemWriter<String> customItemWriter() {
+    public ItemProcessor<String, String> customItemProcessor() {
+        List delegates = new ArrayList<>();
+        delegates.add(new CustomItemProcessor());
+        delegates.add(new CustomItemProcessor2());
 
-        ItemWriterAdapter<String> writer = new ItemWriterAdapter<>();
-        writer.setTargetObject(customService());
-        writer.setTargetMethod("customWrite");
-        return writer;
-    }
-
-    @Bean
-    public CustomService customService() {
-        return new CustomService();
+        return new CompositeItemProcessorBuilder<>()
+                .delegates(delegates)
+                .build();
     }
 
 }
