@@ -20,7 +20,7 @@ import java.util.List;
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
-public class FlatFileDelimitedConfiguration {
+public class FlatFileFormattedConfiguration {
 
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
@@ -47,8 +47,8 @@ public class FlatFileDelimitedConfiguration {
                 .name("flatFileWriter")
                 .resource(new FileSystemResource("/Users/juhwan/study/spring-batch/src/main/resources/customer.txt"))
                 .append(true)
-                .delimited()
-                .delimiter("|")
+                .formatted()
+                .format("%-2d%-5s%-2d")
                 .names(new String[]{"id", "name", "age"})
                 .build();
     }
