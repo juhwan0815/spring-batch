@@ -8,6 +8,8 @@ import org.springframework.batch.core.configuration.annotation.JobBuilderFactory
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
+import org.springframework.batch.item.database.JdbcBatchItemWriter;
+import org.springframework.batch.item.database.builder.JdbcBatchItemWriterBuilder;
 import org.springframework.batch.item.json.JacksonJsonObjectMarshaller;
 import org.springframework.batch.item.json.builder.JsonFileItemWriterBuilder;
 import org.springframework.batch.item.support.ListItemReader;
@@ -15,15 +17,18 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.FileSystemResource;
 
+import javax.sql.DataSource;
 import java.util.Arrays;
 
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
-public class JsonConfiguration {
+public class JdbcBatchConfiguration {
 
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
+
+    private final DataSource dataSource;
 
     @Bean
     public Job job() {
@@ -43,19 +48,19 @@ public class JsonConfiguration {
 
     @Bean
     public ItemWriter<Customer> customItemWriter() {
-        return new JsonFileItemWriterBuilder<Customer>()
-                .name("jsonFileWriter")
-                .jsonObjectMarshaller(new JacksonJsonObjectMarshaller<>())
-                .resource(new FileSystemResource("/Users/juhwan/study/spring-batch/src/main/resources/customer.json"))
+        return new JdbcBatchItemWriterBuilder<Customer>()
+                .dataSource(dataSource)
+                .sql("insert into customer values (:id, :age, :username)")
+                .beanMapped()
                 .build();
     }
 
     @Bean
     public ItemReader<Customer> customItemReader() {
         return new ListItemReader<>(Arrays.asList(
-                new Customer(1L, "황주환", 10),
-                new Customer(2L, "강태환", 10),
-                new Customer(3L, "황철원", 10)
+                new Customer(11L, "황주환", 10),
+                new Customer(12L, "강태환", 10),
+                new Customer(13L, "황철원", 10)
         ));
     }
 }
