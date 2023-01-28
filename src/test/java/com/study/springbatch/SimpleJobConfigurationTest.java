@@ -1,0 +1,57 @@
+package com.study.springbatch;
+
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.batch.core.*;
+import org.springframework.batch.test.JobLauncherTestUtils;
+import org.springframework.batch.test.context.SpringBatchTest;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.junit4.SpringRunner;
+
+import java.util.Date;
+import java.util.List;
+
+@RunWith(SpringRunner.class)
+@SpringBootTest(classes = {SimpleJobConfiguration.class, TestBatchConfig.class})
+@SpringBatchTest
+public class SimpleJobConfigurationTest {
+
+    @Autowired
+    private JobLauncherTestUtils jobLauncherTestUtils;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    @Test
+    public void simpleJob_test() throws Exception {
+
+        // given
+        JobParameters jobParameters = new JobParametersBuilder()
+                .addLong("date", new Date().getTime())
+                .addString("name", "user1")
+                .toJobParameters();
+
+        // when
+//        JobExecution jobExecution = jobLauncherTestUtils.launchJob(jobParameters);
+        JobExecution jobExecution1 = jobLauncherTestUtils.launchStep("step1");
+
+        // then
+//        Assert.assertEquals(jobExecution.getStatus(), BatchStatus.COMPLETED);
+//        Assert.assertEquals(jobExecution.getExitStatus(), ExitStatus.COMPLETED);
+
+        StepExecution stepExecution = (StepExecution) ((List) jobExecution1.getStepExecutions()).get(0);
+        Assert.assertEquals(stepExecution.getCommitCount(), 11);
+        Assert.assertEquals(stepExecution.getReadCount(), 100);
+        Assert.assertEquals(stepExecution.getWriteCount(), 100);
+    }
+
+    @After
+    public void after() {
+        jdbcTemplate.execute("delete from customer2");
+    }
+
+}
