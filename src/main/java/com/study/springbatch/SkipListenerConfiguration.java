@@ -11,10 +11,12 @@ import org.springframework.batch.item.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.List;
+
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
-public class ChunkListenerConfiguration {
+public class SkipListenerConfiguration {
 
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
@@ -31,33 +33,52 @@ public class ChunkListenerConfiguration {
     public Step step() {
         return stepBuilderFactory.get("step")
                 .<Integer, String>chunk(5)
-                .listener(new CustomChunkListener())
                 .reader(new ItemReader<Integer>() {
 
                     int i = 0;
 
                     @Override
                     public Integer read() throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
+                        i++;
+
+                        if(i == 3){
+                            throw new CustomSkipException("read skipped");
+                        }
+
 
                         if(i == 10) {
                             return null;
                         }
 
-                        i++;
                         return i;
                     }
                 })
-                .listener(new CustomItemReaderListener())
                 .processor(new ItemProcessor<Integer, String>() {
                     @Override
                     public String process(Integer item) throws Exception {
-                        throw new RuntimeException("failed");
-//                        return "item" + item;
+
+                        if(item == 4) {
+                            throw new CustomSkipException("process skipped");
+                        }
+
+                        return "item" + item;
                     }
                 })
-                .listener(new CustomItemProcessListener())
-                .writer(items -> items.forEach(item -> log.info("item = {}", item)))
-                .listener(new CustomItemWriterListener())
+                .writer(new ItemWriter<String>() {
+                    @Override
+                    public void write(List<? extends String> items) throws Exception {
+                        for (String item : items) {
+                            if(item.equals("item5")) {
+                                throw new CustomSkipException("write skipped");
+                            }
+                            log.info("item = {}", item);
+                        }
+                    }
+                })
+                .faultTolerant()
+                .skip(CustomSkipException.class)
+                .skipLimit(3)
+                .listener(new CustomSkipListener())
                 .build();
     }
 
