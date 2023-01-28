@@ -4,18 +4,10 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Customer {
+public class JobInfo {
 
-    private Long id;
-
-    private String firstName;
-
-    private String lastName;
-
-    private Date birthdate;
+    private String id;;
 }
