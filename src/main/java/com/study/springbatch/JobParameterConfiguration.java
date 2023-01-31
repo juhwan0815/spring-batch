@@ -3,6 +3,7 @@ package com.study.springbatch;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
+import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
@@ -10,10 +11,12 @@ import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.Map;
+
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
-public class JobInstanceConfiguration {
+public class JobParameterConfiguration {
 
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
@@ -30,6 +33,11 @@ public class JobInstanceConfiguration {
     public Step step1() {
         return stepBuilderFactory.get("step1")
                 .tasklet((contribution, chunkContext) -> {
+                    JobParameters jobParameters = contribution.getStepExecution().getJobExecution().getJobParameters();
+                    log.info("name = {}", jobParameters.getString("name"));
+                    log.info("seq = {}", jobParameters.getLong("seq"));
+                    log.info("date = {}", jobParameters.getDate("date"));
+                    log.info("age = {}", jobParameters.getDouble("age"));
                     return RepeatStatus.FINISHED;
                 })
                 .build();
@@ -39,6 +47,8 @@ public class JobInstanceConfiguration {
     public Step step2() {
         return stepBuilderFactory.get("step2")
                 .tasklet((contribution, chunkContext) -> {
+                    Map<String, Object> jobParameters = chunkContext.getStepContext().getJobParameters();
+
                     return RepeatStatus.FINISHED;
                 })
                 .build();
