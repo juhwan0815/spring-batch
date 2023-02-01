@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Configuration;
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
-public class JobExecutionConfiguration {
+public class StepConfiguration {
 
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
@@ -40,11 +40,7 @@ public class JobExecutionConfiguration {
     @Bean
     public Step step2() {
         return stepBuilderFactory.get("step2")
-                .tasklet((contribution, chunkContext) -> {
-                    log.info("step2 was executed");
-//                    throw new RuntimeException("step2 was failed");
-                    return RepeatStatus.FINISHED;
-                })
+                .tasklet(new CustomTasklet())
                 .build();
     }
 
