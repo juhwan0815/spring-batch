@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Configuration;
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
-public class TaskletConfiguration {
+public class TaskletStepArchitectureConfiguration {
 
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
@@ -33,7 +33,6 @@ public class TaskletConfiguration {
                 .tasklet((contribution, chunkContext) -> {
                     return RepeatStatus.FINISHED;
                 })
-                .allowStartIfComplete(true)
                 .build();
     }
 
@@ -41,10 +40,8 @@ public class TaskletConfiguration {
     public Step step2() {
         return stepBuilderFactory.get("step2")
                 .tasklet((contribution, chunkContext) -> {
-                    throw new RuntimeException("step2 was failed");
-//                    return RepeatStatus.FINISHED;
+                    return RepeatStatus.FINISHED;
                 })
-                .startLimit(3)
                 .build();
     }
 
