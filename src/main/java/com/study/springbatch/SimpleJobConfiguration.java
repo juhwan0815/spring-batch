@@ -23,6 +23,7 @@ public class SimpleJobConfiguration {
         return jobBuilderFactory.get("job")
                 .start(step1())
                 .next(step2())
+                .next(step3())
                 .build();
     }
 
@@ -41,8 +42,16 @@ public class SimpleJobConfiguration {
         return stepBuilderFactory.get("step2")
                 .tasklet((contribution, chunkContext) -> {
                     log.info("step2 was executed");
-                    chunkContext.getStepContext().getStepExecution().setStatus(BatchStatus.FAILED);
-                    contribution.setExitStatus(ExitStatus.STOPPED);
+                    return RepeatStatus.FINISHED;
+                })
+                .build();
+    }
+
+    @Bean
+    public Step step3() {
+        return stepBuilderFactory.get("step3")
+                .tasklet((contribution, chunkContext) -> {
+                    log.info("step3 was executed");
                     return RepeatStatus.FINISHED;
                 })
                 .build();
