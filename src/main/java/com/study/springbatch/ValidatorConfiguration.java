@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.*;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.job.DefaultJobParametersValidator;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,7 +14,7 @@ import org.springframework.context.annotation.Configuration;
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
-public class SimpleJobConfiguration {
+public class ValidatorConfiguration {
 
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
@@ -24,6 +25,8 @@ public class SimpleJobConfiguration {
                 .start(step1())
                 .next(step2())
                 .next(step3())
+//                .validator(new CustomJobParametersValidator())
+                .validator(new DefaultJobParametersValidator(new String[]{"name", "date"}, new String[]{"count"}))
                 .build();
     }
 
