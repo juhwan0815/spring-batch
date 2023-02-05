@@ -2,10 +2,11 @@ package com.study.springbatch;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.batch.core.*;
+import org.springframework.batch.core.Job;
+import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
-import org.springframework.batch.core.job.DefaultJobParametersValidator;
+import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,7 +15,7 @@ import org.springframework.context.annotation.Configuration;
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
-public class PreventRestartConfiguration {
+public class IncrementerConfiguration {
 
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
@@ -22,9 +23,9 @@ public class PreventRestartConfiguration {
     @Bean
     public Job job() {
         return jobBuilderFactory.get("job")
+                .incrementer(new RunIdIncrementer())
                 .start(step1())
                 .next(step2())
-//                .preventRestart()
                 .build();
     }
 
@@ -43,7 +44,6 @@ public class PreventRestartConfiguration {
         return stepBuilderFactory.get("step2")
                 .tasklet((contribution, chunkContext) -> {
                     log.info("step2 was executed");
-//                    throw new RuntimeException("step2 was failed");
                     return RepeatStatus.FINISHED;
                 })
                 .build();
