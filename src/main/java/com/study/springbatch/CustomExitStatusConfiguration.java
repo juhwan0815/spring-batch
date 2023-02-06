@@ -2,6 +2,7 @@ package com.study.springbatch;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
@@ -14,7 +15,7 @@ import org.springframework.context.annotation.Configuration;
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
-public class TransitionConfiguration {
+public class CustomExitStatusConfiguration {
 
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
@@ -23,17 +24,10 @@ public class TransitionConfiguration {
     public Job job() {
         return jobBuilderFactory.get("job")
                 .start(step1())
-                    .on("FAILED")
-                    .to(step2())
-                    .on("FAILED")
-                    .stop()
-                .from(step1())
-                    .on("*")
-                    .to(step3())
-                    .next(step4())
-                .from(step2())
-                    .on("*")
-                    .to(step5())
+                .on("FAILED")
+                .to(step2())
+                .on("PASS")
+                .stop()
                 .end()
                 .build();
     }
@@ -42,7 +36,7 @@ public class TransitionConfiguration {
     public Step step1() {
         return stepBuilderFactory.get("step1")
                 .tasklet((contribution, chunkContext) -> {
-//                    contribution.setExitStatus(ExitStatus.FAILED);
+                    contribution.setExitStatus(ExitStatus.FAILED);
                     return RepeatStatus.FINISHED;
                 })
                 .build();
@@ -52,36 +46,9 @@ public class TransitionConfiguration {
     public Step step2() {
         return stepBuilderFactory.get("step2")
                 .tasklet((contribution, chunkContext) -> {
-//                    contribution.setExitStatus(ExitStatus.FAILED);
                     return RepeatStatus.FINISHED;
                 })
-                .build();
-    }
-
-    @Bean
-    public Step step3() {
-        return stepBuilderFactory.get("step3")
-                .tasklet((contribution, chunkContext) -> {
-                    return RepeatStatus.FINISHED;
-                })
-                .build();
-    }
-
-    @Bean
-    public Step step4() {
-        return stepBuilderFactory.get("step4")
-                .tasklet((contribution, chunkContext) -> {
-                    return RepeatStatus.FINISHED;
-                })
-                .build();
-    }
-
-    @Bean
-    public Step step5() {
-        return stepBuilderFactory.get("step5")
-                .tasklet((contribution, chunkContext) -> {
-                    return RepeatStatus.FINISHED;
-                })
+                .listener(new PassCheckingListener())
                 .build();
     }
 
