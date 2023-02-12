@@ -19,7 +19,7 @@ import java.util.List;
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
-public class ChunkOrientedConfiguration {
+public class ChunkProviderChunkProcessorConfiguration {
 
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
@@ -51,6 +51,5 @@ public class ChunkOrientedConfiguration {
                 })
                 .build();
     }
-
 
 }
