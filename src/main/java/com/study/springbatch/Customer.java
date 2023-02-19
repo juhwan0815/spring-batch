@@ -1,25 +1,22 @@
 package com.study.springbatch;
 
-import lombok.Data;
 import lombok.Getter;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
+import javax.persistence.*;
 
-@Data
 @Entity
+@Getter
 public class Customer {
 
     @Id
     @GeneratedValue
     private Long id;
 
-    private String firstName;
+    private String username;
 
-    private String lastName;
+    private int age;
 
-    private String birthdate;
+    @OneToOne(fetch = FetchType.LAZY, mappedBy = "customer")
+    private Address address;
 
 }
