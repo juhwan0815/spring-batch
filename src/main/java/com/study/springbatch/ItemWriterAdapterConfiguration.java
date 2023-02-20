@@ -9,7 +9,7 @@ import org.springframework.batch.core.configuration.annotation.StepBuilderFactor
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
-import org.springframework.batch.item.database.builder.JpaItemWriterBuilder;
+import org.springframework.batch.item.adapter.ItemWriterAdapter;
 import org.springframework.batch.item.support.ListItemReader;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,7 +21,7 @@ import java.util.List;
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
-public class JdbcBatchConfiguration {
+public class ItemWriterAdapterConfiguration {
 
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
@@ -62,10 +62,15 @@ public class JdbcBatchConfiguration {
 
     @Bean
     public ItemWriter<Customer> customItemWriter() {
-        return new JpaItemWriterBuilder<Customer>()
-                .usePersist(true)
-                .entityManagerFactory(entityManagerFactory)
-                .build();
+        ItemWriterAdapter<Customer> writer = new ItemWriterAdapter<>();
+        writer.setTargetObject(customService());
+        writer.setTargetMethod("customWrite");
+        return writer;
+    }
+
+    @Bean
+    public CustomService customService() {
+        return new CustomService();
     }
 
 }
