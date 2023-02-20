@@ -9,15 +9,12 @@ import org.springframework.batch.core.configuration.annotation.StepBuilderFactor
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
-import org.springframework.batch.item.database.builder.JdbcBatchItemWriterBuilder;
-import org.springframework.batch.item.json.JacksonJsonObjectMarshaller;
-import org.springframework.batch.item.json.builder.JsonFileItemWriterBuilder;
+import org.springframework.batch.item.database.builder.JpaItemWriterBuilder;
 import org.springframework.batch.item.support.ListItemReader;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.FileSystemResource;
 
-import javax.sql.DataSource;
+import javax.persistence.EntityManagerFactory;
 import java.util.Arrays;
 import java.util.List;
 
@@ -28,8 +25,8 @@ public class JdbcBatchConfiguration {
 
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
+    private final EntityManagerFactory entityManagerFactory;
 
-    private final DataSource dataSource;
 
     private int chunkSize = 2;
 
@@ -53,11 +50,11 @@ public class JdbcBatchConfiguration {
     @Bean
     public ItemReader<Customer> customItemReader() {
         List<Customer> customers = Arrays.asList(
-                new Customer(1L, "user1", 18),
-                new Customer(2L, "user2", 18),
-                new Customer(3L, "user3", 18),
-                new Customer(4L, "user4", 18),
-                new Customer(5L, "user5", 18)
+                new Customer("user1", 18),
+                new Customer("user2", 18),
+                new Customer("user3", 18),
+                new Customer("user4", 18),
+                new Customer("user5", 18)
         );
 
         return new ListItemReader<>(customers);
@@ -65,10 +62,9 @@ public class JdbcBatchConfiguration {
 
     @Bean
     public ItemWriter<Customer> customItemWriter() {
-        return new JdbcBatchItemWriterBuilder<Customer>()
-                .dataSource(dataSource)
-                .sql("insert into customer2 values (:id, :age, :username)")
-                .beanMapped()
+        return new JpaItemWriterBuilder<Customer>()
+                .usePersist(true)
+                .entityManagerFactory(entityManagerFactory)
                 .build();
     }
 
