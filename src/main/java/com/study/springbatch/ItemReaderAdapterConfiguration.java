@@ -8,11 +8,15 @@ import org.springframework.batch.core.configuration.annotation.JobBuilderFactory
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.item.ItemReader;
-import org.springframework.batch.item.adapter.ItemReaderAdapter;
+import org.springframework.batch.item.ItemWriter;
+import org.springframework.batch.item.file.builder.FlatFileItemWriterBuilder;
+import org.springframework.batch.item.support.ListItemReader;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.FileSystemResource;
 
-import javax.persistence.EntityManagerFactory;
+import java.util.Arrays;
+import java.util.List;
 
 @Slf4j
 @Configuration
@@ -22,8 +26,7 @@ public class ItemReaderAdapterConfiguration {
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
 
-    private final EntityManagerFactory entityManagerFactory;
-    private int chunkSize = 10;
+    private int chunkSize = 2;
 
     @Bean
     public Job job() throws Exception {
@@ -36,23 +39,35 @@ public class ItemReaderAdapterConfiguration {
     @Bean
     public Step step1() throws Exception {
         return stepBuilderFactory.get("step1")
-                .<String, String>chunk(chunkSize)
+                .<Customer, Customer>chunk(chunkSize)
                 .reader(customItemReader())
-                .writer(items -> items.forEach(item -> log.info("item = {}", item)))
+                .writer(customItemWriter())
                 .build();
     }
 
     @Bean
-    public ItemReader<String> customItemReader() {
-        ItemReaderAdapter<String> reader = new ItemReaderAdapter<>();
-        reader.setTargetObject(customService());
-        reader.setTargetMethod("customRead");
-        return reader;
+    public ItemReader<Customer> customItemReader() {
+        List<Customer> customers = Arrays.asList(
+                new Customer(1L, "user1", 18),
+                new Customer(2L, "user2", 18),
+                new Customer(3L, "user3", 18),
+                new Customer(4L, "user4", 18),
+                new Customer(5L, "user5", 18)
+        );
+
+        return new ListItemReader<>(customers);
     }
 
     @Bean
-    public CustomService customService() {
-        return new CustomService();
+    public ItemWriter<Customer> customItemWriter() {
+        return new FlatFileItemWriterBuilder<Customer>()
+                .name("flatFileWriter")
+                .resource(new FileSystemResource("/Users/juhwan/study/spring-batch/src/main/resources/customer.txt"))
+                .shouldDeleteIfEmpty(true)
+                .delimited()
+                .delimiter("|")
+                .names(new String[]{"id", "name", "age"})
+                .build();
     }
 
 }

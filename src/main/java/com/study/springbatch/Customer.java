@@ -1,22 +1,16 @@
 package com.study.springbatch;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-import javax.persistence.*;
-
-@Entity
 @Getter
+@AllArgsConstructor
 public class Customer {
 
-    @Id
-    @GeneratedValue
     private Long id;
 
-    private String username;
+    private String name;
 
     private int age;
-
-    @OneToOne(fetch = FetchType.LAZY, mappedBy = "customer")
-    private Address address;
 
 }
