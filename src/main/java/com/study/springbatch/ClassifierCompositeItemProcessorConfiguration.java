@@ -8,24 +8,22 @@ import org.springframework.batch.core.configuration.annotation.JobBuilderFactory
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.item.ItemProcessor;
+import org.springframework.batch.item.support.ClassifierCompositeItemProcessor;
 import org.springframework.batch.item.support.ListItemReader;
-import org.springframework.batch.item.support.builder.CompositeItemProcessorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import javax.persistence.EntityManagerFactory;
 import java.util.Arrays;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
-public class CompositeItemProcessorConfiguration {
+public class ClassifierCompositeItemProcessorConfiguration {
 
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
-    private final EntityManagerFactory entityManagerFactory;
-
 
     private int chunkSize = 2;
 
@@ -40,19 +38,32 @@ public class CompositeItemProcessorConfiguration {
     @Bean
     public Step step1() {
         return stepBuilderFactory.get("step1")
-                .<String, String>chunk(chunkSize)
-                .reader(new ListItemReader<>(Arrays.asList("user1", "user2", "user3")))
+                .<ProcessorInfo, ProcessorInfo>chunk(chunkSize)
+                .reader(new ListItemReader<>(Arrays.asList(
+                        new ProcessorInfo(1),
+                        new ProcessorInfo(2),
+                        new ProcessorInfo(3)
+                )))
                 .processor(customItemProcessor())
                 .writer(items -> items.forEach(item -> log.info("item = {}", item)))
                 .build();
     }
 
     @Bean
-    public ItemProcessor<String, String> customItemProcessor() {
-        List delegates = Arrays.asList(new CustomItemProcessor(), new CustomItemProcessor2());
-        return new CompositeItemProcessorBuilder<>()
-                .delegates(delegates)
-                .build();
+    public ItemProcessor<ProcessorInfo, ProcessorInfo> customItemProcessor() {
+        ClassifierCompositeItemProcessor<ProcessorInfo, ProcessorInfo> processor
+                = new ClassifierCompositeItemProcessor<>();
+
+        ProcessorClassifier<ProcessorInfo,ItemProcessor<?, ? extends ProcessorInfo>> classifier = new ProcessorClassifier<>();
+
+        Map<Integer,ItemProcessor<ProcessorInfo, ProcessorInfo>> processorMap = new HashMap<>();
+        processorMap.put(1, new CustomItemProcessor1());
+        processorMap.put(2, new CustomItemProcessor2());
+        processorMap.put(3, new CustomItemProcessor3());
+
+        classifier.setProcessorMap(processorMap);
+        processor.setClassifier(classifier);
+        return processor;
     }
 
 }
