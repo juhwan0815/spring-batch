@@ -7,10 +7,9 @@ import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
-import org.springframework.batch.item.ItemReader;
-import org.springframework.batch.item.ItemWriter;
-import org.springframework.batch.item.adapter.ItemWriterAdapter;
+import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.support.ListItemReader;
+import org.springframework.batch.item.support.builder.CompositeItemProcessorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -21,7 +20,7 @@ import java.util.List;
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
-public class ItemWriterAdapterConfiguration {
+public class CompositeItemProcessorConfiguration {
 
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
@@ -31,7 +30,7 @@ public class ItemWriterAdapterConfiguration {
     private int chunkSize = 2;
 
     @Bean
-    public Job job() throws Exception {
+    public Job job() {
         return jobBuilderFactory.get("job")
                 .incrementer(new RunIdIncrementer())
                 .start(step1())
@@ -39,38 +38,21 @@ public class ItemWriterAdapterConfiguration {
     }
 
     @Bean
-    public Step step1() throws Exception {
+    public Step step1() {
         return stepBuilderFactory.get("step1")
-                .<Customer, Customer>chunk(chunkSize)
-                .reader(customItemReader())
-                .writer(customItemWriter())
+                .<String, String>chunk(chunkSize)
+                .reader(new ListItemReader<>(Arrays.asList("user1", "user2", "user3")))
+                .processor(customItemProcessor())
+                .writer(items -> items.forEach(item -> log.info("item = {}", item)))
                 .build();
     }
 
     @Bean
-    public ItemReader<Customer> customItemReader() {
-        List<Customer> customers = Arrays.asList(
-                new Customer("user1", 18),
-                new Customer("user2", 18),
-                new Customer("user3", 18),
-                new Customer("user4", 18),
-                new Customer("user5", 18)
-        );
-
-        return new ListItemReader<>(customers);
-    }
-
-    @Bean
-    public ItemWriter<Customer> customItemWriter() {
-        ItemWriterAdapter<Customer> writer = new ItemWriterAdapter<>();
-        writer.setTargetObject(customService());
-        writer.setTargetMethod("customWrite");
-        return writer;
-    }
-
-    @Bean
-    public CustomService customService() {
-        return new CustomService();
+    public ItemProcessor<String, String> customItemProcessor() {
+        List delegates = Arrays.asList(new CustomItemProcessor(), new CustomItemProcessor2());
+        return new CompositeItemProcessorBuilder<>()
+                .delegates(delegates)
+                .build();
     }
 
 }
