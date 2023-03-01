@@ -12,7 +12,9 @@ import org.springframework.batch.item.support.ListItemReader;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.retry.RetryPolicy;
+import org.springframework.retry.backoff.FixedBackOffPolicy;
 import org.springframework.retry.policy.SimpleRetryPolicy;
+import org.springframework.retry.support.RetryTemplate;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -40,16 +42,13 @@ public class RetryConfiguration {
     @Bean
     public Step step1() {
         return stepBuilderFactory.get("step1")
-                .<String, String>chunk(chunkSize)
+                .<String, Customer>chunk(chunkSize)
                 .reader(reader())
                 .processor(processor())
                 .writer(items -> items.forEach(item -> log.info("item = {}", item)))
                 .faultTolerant()
-                .skip(RetryableException.class)
-                .skipLimit(2)
 //                .retry(RetryableException.class)
 //                .retryLimit(2)
-                .retryPolicy(retryPolicy())
                 .build();
     }
 
@@ -62,8 +61,8 @@ public class RetryConfiguration {
 
 
     @Bean
-    public ItemProcessor<String, String> processor() {
-        return new RetryItemProcessor();
+    public ItemProcessor<String, Customer> processor() {
+        return new RetryItemProcessor(retryTemplate());
     }
 
     @Bean
@@ -73,6 +72,22 @@ public class RetryConfiguration {
             items.add(String.valueOf(i));
         }
         return new ListItemReader<>(items);
+    }
+
+    @Bean
+    public RetryTemplate retryTemplate() {
+        Map<Class<? extends Throwable>, Boolean> exceptionClass = new HashMap<>();
+        exceptionClass.put(RetryableException.class, true);
+
+        FixedBackOffPolicy backOffPolicy = new FixedBackOffPolicy();
+        backOffPolicy.setBackOffPeriod(2000);
+
+        SimpleRetryPolicy simpleRetryPolicy = new SimpleRetryPolicy(2, exceptionClass);
+        RetryTemplate retryTemplate = new RetryTemplate();
+
+        retryTemplate.setRetryPolicy(simpleRetryPolicy);
+        retryTemplate.setBackOffPolicy(backOffPolicy);
+        return retryTemplate;
     }
 
 }
