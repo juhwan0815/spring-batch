@@ -7,22 +7,23 @@ import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
-import org.springframework.batch.integration.async.AsyncItemProcessor;
-import org.springframework.batch.integration.async.AsyncItemWriter;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.support.ListItemReader;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
+import org.springframework.core.task.TaskExecutor;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ThreadPoolExecutor;
 
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
-public class AsyncConfiguration {
+public class MultiThreadConfiguration {
 
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
@@ -33,39 +34,37 @@ public class AsyncConfiguration {
     public Job job() {
         return jobBuilderFactory.get("job")
                 .incrementer(new RunIdIncrementer())
-                .start(asyncStep())
+                .start(step())
                 .build();
     }
 
     @Bean
-    public Step asyncStep() {
+    public Step step() {
         return stepBuilderFactory.get("step")
                 .<String, String>chunk(chunkSize)
                 .reader(customItemReader())
-                .processor(asyncItemProcessor())
-                .writer(asyncItemWriter())
+                .listener(new CustomItemReaderListener())
+                .processor(customItemProcessor())
+                .listener(new CustomItemProcessorListener())
+                .writer(customItemWriter())
+                .listener(new CustomItemWriterListener())
+                .taskExecutor(taskExecutor())
                 .build();
     }
 
     @Bean
-    public AsyncItemProcessor asyncItemProcessor() {
-        AsyncItemProcessor<String, String> asyncItemProcessor = new AsyncItemProcessor<>();
-        asyncItemProcessor.setDelegate(customItemProcessor());
-        asyncItemProcessor.setTaskExecutor(new SimpleAsyncTaskExecutor());
-        return asyncItemProcessor;
-    }
-
-    @Bean
-    public AsyncItemWriter asyncItemWriter() {
-        AsyncItemWriter<String> asyncItemWriter = new AsyncItemWriter<>();
-        asyncItemWriter.setDelegate(customItemWriter());
-        return asyncItemWriter;
+    public TaskExecutor taskExecutor() {
+        ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
+        taskExecutor.setCorePoolSize(4);
+        taskExecutor.setMaxPoolSize(8);
+        taskExecutor.setThreadNamePrefix("async-thread");
+        return taskExecutor;
     }
 
     @Bean
     public ListItemReader<String> customItemReader() {
         List<String> items = new ArrayList<>();
-        for (int i = 0; i < 30; i++) {
+        for (int i = 0; i < 1000; i++) {
             items.add(String.valueOf(i));
         }
         return new ListItemReader<>(items);
