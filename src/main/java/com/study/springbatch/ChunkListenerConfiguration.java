@@ -7,14 +7,17 @@ import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
-import org.springframework.batch.repeat.RepeatStatus;
+import org.springframework.batch.item.ItemProcessor;
+import org.springframework.batch.item.support.ListItemReader;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.Arrays;
 
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
-public class JobAndStepListenerConfiguration {
+public class ChunkListenerConfiguration {
 
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
@@ -24,25 +27,26 @@ public class JobAndStepListenerConfiguration {
         return jobBuilderFactory.get("job")
                 .incrementer(new RunIdIncrementer())
                 .start(step1())
-                .next(step2())
-                .listener(new CustomAnnotationJobExecutionListener())
                 .build();
     }
 
     @Bean
     public Step step1() {
         return stepBuilderFactory.get("step1")
-                .tasklet((contribution, chunkContext) -> RepeatStatus.FINISHED)
-                .listener(new CustomStepExecutionListener())
+                .<Integer, String>chunk(5)
+                .reader(reader())
+                .listener(new CustomItemReaderListener())
+                .processor((ItemProcessor<Integer, String>) item -> "item" + item)
+                .listener(new CustomItemProcessorListener())
+                .writer(items -> items.forEach(item -> log.info("item = {}", item)))
+                .listener(new CustomItemWriterListener())
+                .listener(new CustomChunkListener())
                 .build();
     }
 
     @Bean
-    public Step step2() {
-        return stepBuilderFactory.get("step2")
-                .tasklet((contribution, chunkContext) -> RepeatStatus.FINISHED)
-                .listener(new CustomStepExecutionListener())
-                .build();
+    public ListItemReader<Integer> reader() {
+        return new ListItemReader(Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10));
     }
 
 }
