@@ -8,17 +8,13 @@ import org.springframework.batch.core.configuration.annotation.JobBuilderFactory
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.item.*;
-import org.springframework.batch.item.support.ListItemReader;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import java.util.Arrays;
-import java.util.List;
 
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
-public class SkipListenerConfiguration {
+public class RetryListenerConfiguration {
 
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
@@ -41,40 +37,21 @@ public class SkipListenerConfiguration {
 
                     @Override
                     public Integer read() throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
-                        i++;
 
-                        if(i == 3){
-                            throw new CustomSkipException("read skipped");
-                        }
-
-
-                        if(i == 10) {
+                        if (i == 10) {
                             return null;
                         }
 
+                        i++;
                         return i;
                     }
                 })
-                .processor((ItemProcessor<Integer, String>) item -> {
-
-                    if(item == 4) {
-                        throw new CustomSkipException("process skipped");
-                    }
-
-                    return "item" + item;
-                })
-                .writer(items -> {
-                    for (String item : items) {
-                        if(item.equals("item5")) {
-                            throw new CustomSkipException("write skipped");
-                        }
-                        log.info("item = {}", item);
-                    }
-                })
+                .processor(new CustomItemProcessor())
+                .writer(new CustomItemWriter())
                 .faultTolerant()
-                .skip(CustomSkipException.class)
-                .skipLimit(3)
-                .listener(new CustomSkipListener())
+                .retry(CustomRetryException.class)
+                .retryLimit(5)
+                .listener(new CustomRetryListener())
                 .build();
     }
 
