@@ -5,7 +5,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-@EnableBatchProcessing
+@EnableBatchProcessing // 스프링 배치 설정
 public class SpringBatchApplication {
 
     public static void main(String[] args) {
